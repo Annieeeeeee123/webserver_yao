@@ -19,10 +19,13 @@ public:
 
 public:
     bool ConnectDB();
-    vector<vector<string>> getDatafromDB(string table_name,string user_name);
-    bool InsertDB(string table_name, string m_name, string pass);
-    bool UpdateDB(string table_name, int user_id, string m_name, string pass);
-    bool DeleteDB(string table_name, string m_name);
+    vector<vector<string>> getDatafromUserDB(string table_name,string user_name);
+    vector<vector<string>> getDatafromSessionDB(string table_name,int user_id=0, string session_id="");
+    bool InsertUserDB(string table_name, string m_name, string pass);
+    bool UpdateUserDB(string table_name, int user_id, string m_name, string pass);
+    bool DeleteUserDB(string table_name, string m_name);
+    bool InsertSessionDB(string table_name, int user_id, string session_id, string expire_time);
+    bool UpdateSessionDB(string table_name, string session_id, string expire_time);
 	mysql_con();
 	~mysql_con();
 

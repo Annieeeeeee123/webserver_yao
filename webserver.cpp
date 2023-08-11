@@ -12,7 +12,8 @@ void webserver::InitSql(){
 }
 
 
-webserver::~webserver(){}
+webserver::~webserver(){
+}
 
 void * working( void *arg){
     struct pthread_info *pinfo = (struct pthread_info *)arg;
@@ -30,7 +31,7 @@ bool webserver:: EventListen()
     //create socket for listen
     m_listenfd=socket(AF_INET,SOCK_STREAM,0);// AF_INET协议族 IPv4  SOCK_STREAM流式协议TCP 
     int reuse = 1;
-    setsockopt(m_listenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+    setsockopt(m_listenfd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse));
     if(m_listenfd==-1)
     {
         printf("socket create fail\n");
@@ -43,13 +44,13 @@ bool webserver:: EventListen()
     serveraddr.sin_port=htons(m_port);// htons // 主机字节序 - 网络字节序
     if(bind(m_listenfd,(struct sockaddr *)&serveraddr,sizeof(serveraddr))!=0)
     {
-        printf("bind failed \n");
+        perror("bind");
         return false;
     }
 
     if(listen(m_listenfd,5)!=0)
     {
-        printf("Listen failed\n");
+        perror("listen");
         return false;
     }
     return true;

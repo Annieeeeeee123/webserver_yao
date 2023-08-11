@@ -49,6 +49,9 @@
         "set": "cpp",
         "slist": "cpp",
         "iomanip": "cpp",
-        "cstring": "cpp"
+        "cstring": "cpp",
+        "bitset": "cpp",
+        "regex": "cpp",
+        "cinttypes": "cpp"
     }
 }
