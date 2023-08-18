@@ -20,7 +20,7 @@
 using namespace std;
 using namespace aigc;
 
-struct user{
+struct user_info{
     string username;
     string password;
     AIGC_JSON_HELPER(username, password)
@@ -49,9 +49,13 @@ struct login_response{
 class httpconn
 {
     public:
-        httpconn(int m_clintfd, mysql_con* mysql);
+        static int m_user_count;
+        static int m_epollfd; //所有的事件都被注册到同一个m_epollfd
+        void Init(int m_clintfd, const sockaddr_in &addr, mysql_con* mysql);
+        httpconn();
         ~httpconn();
         void handle_client();
+        void close_conn(); //关闭连接
     private:
         string session_id(string username, int id);
         bool check_session_state(string sessionid);
@@ -65,7 +69,7 @@ class httpconn
         int m_clintfd;
         sockaddr_in m_address;
         mysql_con* mysql;
-        user usr;
+        user_info usr;
         response res_pons;
         login_response login_res;
         

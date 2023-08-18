@@ -2,12 +2,33 @@
 
 using namespace std;
 
-httpconn::httpconn(int clintfd, mysql_con* mysqlconn){
+int httpconn::m_user_count = 0;
+int httpconn::m_epollfd = -1;
+
+httpconn::httpconn(){
+}
+
+
+void httpconn::Init(int clintfd, const sockaddr_in &addr,  mysql_con *mysqlconn){
     m_clintfd = clintfd;
     mysql = mysqlconn;
+    m_address = addr;
+    addfd(m_epollfd, m_clintfd, true);
+    m_user_count++;
+    printf("http_conn init: %d\n", m_clintfd);
+}
+
+void httpconn::close_conn(){
+    if(m_clintfd!=-1){
+        remove_fd(m_epollfd, m_clintfd);
+    }
+    printf("close_conn: %d\n", m_clintfd);
+    m_clintfd = -1;
+    m_user_count--;
 }
 
 httpconn::~httpconn(){
+
 }
 
 bool httpconn:: check_session_state(string sessionid){
@@ -18,8 +39,8 @@ bool httpconn:: check_session_state(string sessionid){
     if(sess.size()>0){
         vector<string> ses = sess[0];
         string expire_time = ses[3];
-        cout<<"expire_time:"<<expire_time<<endl;//expire_time:2023-08-10 17:10:42
-        cout<<"time_now:"<<time_now<<endl; //time_now:2023-8-10 17:6:16
+        // cout<<"expire_time:"<<expire_time<<endl;//expire_time:2023-08-10 17:10:42
+        // cout<<"time_now:"<<time_now<<endl; //time_now:2023-8-10 17:6:16
         if(expire_time > time_now) return true; 
         else return false;
     }else{
@@ -34,6 +55,7 @@ void  httpconn::bad_request(){
                     "\r\n";
     response+= "Bad Request!";        
     char write_buffer[1024]={0};
+    printf("%s\n", write_buffer);
     strcpy(write_buffer,response.c_str());
     send(m_clintfd, write_buffer, strlen(write_buffer), 0);
 }
@@ -64,6 +86,8 @@ void httpconn:: handle_request(char *request) {
             string str_header = header;
             string session_id = str_header.substr(0,32);
             query_user(session_id);
+        }else{
+            bad_request();
         }
     }
     // 处理POST请求
@@ -104,6 +128,9 @@ void httpconn::options_response(){
 
 
 void httpconn::query_user(string params){
+    /***
+     * 检查用户的登陆状态
+    */
         string sessionid = params;
         //检查登陆状态
         if(check_session_state(sessionid)){
@@ -190,10 +217,10 @@ string httpconn:: session_id(string username, int id){
     vector<vector<string>>  sess = mysql->getDatafromSessionDB("session", id, "");
     time_t now = time(nullptr);
     tm* t = localtime(&now);
-    string time_now = to_string(t->tm_year+1900) + "-" + to_string(t->tm_mon+1) + "-" + to_string(t->tm_mday)
-			+ " " + to_string(t->tm_hour) + ":" + to_string(t->tm_min) + ":" + to_string(t->tm_sec);
-    string expire_time = to_string(t->tm_year+1900) + "-" + to_string(t->tm_mon+1) + "-" + to_string(t->tm_mday)
-        + " " + to_string(t->tm_hour) + ":" + to_string(t->tm_min+2) + ":" + to_string(t->tm_sec);
+    // 工具类函数stime，将时间格式化
+    string time_now = stime(t);
+    t->tm_min+=2; //会话时间2分钟
+    string expire_time = stime(t);
     if(sess.size()>0){
         vector<string> ses = sess[0];
         session_id =  ses[2];

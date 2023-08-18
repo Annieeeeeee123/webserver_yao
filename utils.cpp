@@ -11,3 +11,29 @@ string stime(tm* t){
     cout<<"formate time:"<<stime<<endl;
     return stime;
 }
+
+//设置文件描述符为非阻塞
+void nonblocking(int fd){
+    int flag = fcntl(fd, F_GETFL);
+    flag |= O_NONBLOCK;
+    fcntl(fd, F_SETFL, flag);
+}
+
+
+// 添加文件描述符到epoll
+void addfd(int epollfd, int fd, bool one_shot){
+    epoll_event event;
+    event.data.fd = fd;
+    event.events = EPOLLIN |  EPOLLRDHUP;
+    if(one_shot){
+        event.events |= EPOLLONESHOT;
+    }
+    epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
+    nonblocking(fd);
+}
+
+// 删除文件描述符到epoll
+void remove_fd(int epollfd, int fd){
+    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0);
+    close(fd);
+}
