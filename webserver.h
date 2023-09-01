@@ -46,9 +46,8 @@ class webserver{
         httpconn *users;
 
     private:
-    /*工作线程运行的函数，它不断从工作队列中取出任务并执行*/
+    /*工作线程运行的函数*/
     static void *working(void *arg);
-    void run(int m_clintfd);
 };
 
 #endif

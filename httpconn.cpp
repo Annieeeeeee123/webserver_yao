@@ -16,15 +16,15 @@ void httpconn::Init(int clintfd, const sockaddr_in &addr,  mysql_con *mysqlconn)
     addfd(m_epollfd, m_clintfd, true);
     m_user_count++;
     printf("http_conn init: %d\n", m_clintfd);
+    printf("m_user_count: %d\n", m_user_count);
 }
 
 void httpconn::close_conn(){
     if(m_clintfd!=-1){
         remove_fd(m_epollfd, m_clintfd);
+        m_clintfd = -1;
+        m_user_count--;
     }
-    printf("close_conn: %d\n", m_clintfd);
-    m_clintfd = -1;
-    m_user_count--;
 }
 
 httpconn::~httpconn(){
@@ -82,10 +82,15 @@ void httpconn:: handle_request(char *request) {
     // 处理GET请求
     if (strcmp(method, "GET") == 0) {
         if(strcmp(url, "/query_user") == 0){
-            header = strstr(request, "SessionID")+11;
-            string str_header = header;
-            string session_id = str_header.substr(0,32);
-            query_user(session_id);
+            header = strstr(request, "SessionID");
+            if(header != NULL){
+                string str_header = header+11;
+                string session_id = str_header.substr(0,32);
+                query_user(session_id);
+            }else{
+                query_user("");
+            }
+
         }else{
             bad_request();
         }
@@ -105,6 +110,7 @@ void httpconn:: handle_request(char *request) {
     }else if(strcmp(method, "OPTIONS") == 0){
         options_response();
     }
+    modfd(m_epollfd, m_clintfd, EPOLLIN);  //
 }
 
 void httpconn::options_response(){
@@ -132,13 +138,18 @@ void httpconn::query_user(string params){
      * 检查用户的登陆状态
     */
         string sessionid = params;
-        //检查登陆状态
-        if(check_session_state(sessionid)){
-            res_pons.res_code = 0;
-            res_pons.res_info = "session state!";
-        }else{
+        if(sessionid == ""){
             res_pons.res_code = 2;
             res_pons.res_info = "session outdated!";
+        }else{
+            //检查登陆状态
+            if(check_session_state(sessionid)){
+                res_pons.res_code = 0;
+                res_pons.res_info = "session state!";
+            }else{
+                res_pons.res_code = 2;
+                res_pons.res_info = "session outdated!";
+            }
         }
         // 构造响应消息
         string response= "HTTP/1.1 200 OK\r\n"

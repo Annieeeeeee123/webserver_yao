@@ -36,4 +36,13 @@ void addfd(int epollfd, int fd, bool one_shot){
 void remove_fd(int epollfd, int fd){
     epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0);
     close(fd);
+    printf("close_conn: %d\n", fd);
+}
+
+// 修改文件描述符，重置socket上的EPOLLONESHOT事件，以确保下一次可读时，EPOLLIN事件能被触发
+void modfd(int epollfd, int fd, int ev) {
+    epoll_event event;
+    event.data.fd = fd;
+    event.events = ev | EPOLLONESHOT | EPOLLRDHUP;
+    epoll_ctl( epollfd, EPOLL_CTL_MOD, fd, &event);
 }

@@ -17,8 +17,11 @@
 
 ## 运行方式
 sudo service start mysql  //启动mysql
+
 make server  //编译
+
 make run  //运行
+
 
 ## 功能介绍
 用户登陆界面，根据用户名和密码验证登录信息（login），并返回user_id和session_id。

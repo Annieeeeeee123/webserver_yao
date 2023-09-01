@@ -17,8 +17,6 @@ webserver::~webserver(){
     close(m_epollfd);
     delete [] users;
 }
-
-
 void * webserver:: working( void *arg){
     struct pthread_info *pinfo = (struct pthread_info *)arg;
     int m_clintfd =pinfo->m_clinfid;
@@ -29,9 +27,6 @@ void * webserver:: working( void *arg){
     return NULL;
 }
 
-void webserver:: run(int m_clintfd){
-
-}
 bool webserver:: EventListen()
 {
     //create socket for listen
